@@ -35,9 +35,9 @@ services:
       # Automatically generated secure secret key base for Rails cookies & sessions
       - key: SECRET_KEY_BASE
         generateValue: true
-      # Update to your live Render web service URL or custom domain
+      # Must match your live Render service URL (e.g. https://chatwoot-web-xxxx.onrender.com) or custom domain
       - key: FRONTEND_URL
-        value: https://chatwoot-web.onrender.com
+        sync: false
       # External Aiven PostgreSQL Connection URL (Render will prompt for input during setup)
       - key: DATABASE_URL
         sync: false
