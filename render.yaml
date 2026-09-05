@@ -65,8 +65,27 @@ services:
       # Required for Redis TLS connections on cloud providers
       - key: REDIS_OPENSSL_VERIFY_MODE
         value: none
+      # ------------------------------------------------------------------------
+      # Memory Optimization Settings for 512MB RAM Instances
+      # ------------------------------------------------------------------------
+      # Single-mode Puma (0 workers) eliminates master/worker process duplication
+      - key: WEB_CONCURRENCY
+        value: "0"
+      # Reduce threads to lower memory footprint and DB pool connections
       - key: RAILS_MAX_THREADS
-        value: "5"
+        value: "3"
+      - key: RAILS_MIN_THREADS
+        value: "1"
+      # Prevent Linux glibc malloc heap fragmentation in Ruby
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      # Aggressive Ruby GC tuning to free memory earlier
+      - key: RUBY_GC_HEAP_GROWTH_FACTOR
+        value: "1.1"
+      - key: RUBY_GC_MALLOC_LIMIT
+        value: "16777216"
+      - key: RUBY_GC_OLDMALLOC_LIMIT
+        value: "16777216"
     disk:
       name: chatwoot-web-storage
       mountPath: /app/storage
@@ -148,6 +167,22 @@ services:
           property: connectionString
       - key: REDIS_OPENSSL_VERIFY_MODE
         value: none
+      # ------------------------------------------------------------------------
+      # Worker Memory Optimization Settings
+      # ------------------------------------------------------------------------
+      # Reduce Sidekiq thread concurrency to minimize worker memory footprint
+      - key: SIDEKIQ_CONCURRENCY
+        value: "2"
+      # Prevent Linux glibc malloc heap fragmentation in Ruby
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      # Aggressive Ruby GC tuning to free memory earlier
+      - key: RUBY_GC_HEAP_GROWTH_FACTOR
+        value: "1.1"
+      - key: RUBY_GC_MALLOC_LIMIT
+        value: "16777216"
+      - key: RUBY_GC_OLDMALLOC_LIMIT
+        value: "16777216"
     disk:
       name: chatwoot-worker-storage
       mountPath: /app/storage
