@@ -38,11 +38,24 @@ services:
       # Update to your live Render web service URL or custom domain
       - key: FRONTEND_URL
         value: https://chatwoot-web.onrender.com
-      # Postgres database connection string injected from managed database below
+      # External Aiven PostgreSQL Connection URL (Render will prompt for input during setup)
       - key: DATABASE_URL
-        fromDatabase:
-          name: chatwoot-postgres
-          property: connectionString
+        sync: false
+      # Divided PostgreSQL variables required by Chatwoot config/database.yml
+      - key: POSTGRES_HOST
+        value: pg-161848d2-youssefmohamedaly750-2283.d.aivencloud.com
+      - key: POSTGRES_PORT
+        value: "17536"
+      - key: POSTGRES_USERNAME
+        value: avnadmin
+      - key: POSTGRES_PASSWORD
+        sync: false
+      - key: POSTGRES_DATABASE
+        value: defaultdb
+      - key: PGSSLMODE
+        value: require
+      - key: POSTGRES_SSLMODE
+        value: require
       # Redis connection string injected from managed Redis below
       - key: REDIS_URL
         fromService:
@@ -93,10 +106,41 @@ services:
           type: web
           name: chatwoot-web
           envVarKey: FRONTEND_URL
+      # Inherit PostgreSQL database variables from web service
       - key: DATABASE_URL
-        fromDatabase:
-          name: chatwoot-postgres
-          property: connectionString
+        fromService:
+          type: web
+          name: chatwoot-web
+          envVarKey: DATABASE_URL
+      - key: POSTGRES_HOST
+        fromService:
+          type: web
+          name: chatwoot-web
+          envVarKey: POSTGRES_HOST
+      - key: POSTGRES_PORT
+        fromService:
+          type: web
+          name: chatwoot-web
+          envVarKey: POSTGRES_PORT
+      - key: POSTGRES_USERNAME
+        fromService:
+          type: web
+          name: chatwoot-web
+          envVarKey: POSTGRES_USERNAME
+      - key: POSTGRES_PASSWORD
+        fromService:
+          type: web
+          name: chatwoot-web
+          envVarKey: POSTGRES_PASSWORD
+      - key: POSTGRES_DATABASE
+        fromService:
+          type: web
+          name: chatwoot-web
+          envVarKey: POSTGRES_DATABASE
+      - key: PGSSLMODE
+        value: require
+      - key: POSTGRES_SSLMODE
+        value: require
       - key: REDIS_URL
         fromService:
           type: redis
@@ -115,18 +159,6 @@ services:
   - type: redis
     name: chatwoot-redis
     region: oregon
-    plan: starter
+    plan: free
     maxmemoryPolicy: noeviction
-    ipAllowList: []
-
-# ------------------------------------------------------------------------------
-# 4. Managed PostgreSQL Database (Version 15, UTF-8 Collation)
-# ------------------------------------------------------------------------------
-databases:
-  - name: chatwoot-postgres
-    region: oregon
-    plan: starter
-    databaseName: chatwoot_production
-    user: chatwoot
-    postgresMajorVersion: "15"
     ipAllowList: []

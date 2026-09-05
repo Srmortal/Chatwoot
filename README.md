@@ -277,11 +277,12 @@ git push -u origin main
 
 1. Log in to [Render Dashboard](https://dashboard.render.com/).
 2. Click **New +** in the top navigation and select **Blueprint**.
-3. Connect your Git repository (`chatwoot-deploy`).
-4. Render will detect `render.yaml` and list all 4 resources (`chatwoot-web`, `chatwoot-worker`, `chatwoot-redis`, and `chatwoot-postgres`).
+3. Connect your Git repository (`Srmortal/Chatwoot`).
+4. Render will detect `render.yaml` and list the managed resources (`chatwoot-web`, `chatwoot-worker`, and `chatwoot-redis`).
 5. Click **Apply**.
 6. Render will:
-   - Provision PostgreSQL 15 and Redis.
+   - Connect to your external Aiven PostgreSQL instance.
+   - Provision managed Redis for queues and cache.
    - Run `bundle exec rails db:chatwoot_prepare` via Render's `preDeployCommand`.
    - Deploy `chatwoot-web` and `chatwoot-worker`.
 
@@ -292,23 +293,31 @@ git push -u origin main
 3. Update `FRONTEND_URL` to match your actual URL (e.g. `https://chatwoot.yourcompany.com`).
 4. Click **Save Changes**. The worker service will automatically inherit this value.
 
-### Using External Managed Databases (Neon, Supabase)
+### External PostgreSQL Configuration (Aiven / Neon / Supabase)
 
-If you prefer using an external serverless PostgreSQL provider (such as Neon, Supabase, or AWS RDS):
+Chatwoot's Rails database configuration (`config/database.yml`) requires both the connection URI and divided variables:
 
-1. In `render.yaml`, comment out the `databases:` section.
-2. Under `chatwoot-web` and `chatwoot-worker` `envVars`, replace:
-   ```yaml
-   - key: DATABASE_URL
-     fromDatabase:
-       name: chatwoot-postgres
-       property: connectionString
-   ```
-   with:
-   ```yaml
-   - key: DATABASE_URL
-     sync: false # Render prompts you to paste your external connection string
-   ```
+```yaml
+# Full connection string
+- key: DATABASE_URL
+  sync: false # Paste: postgres://avnadmin:<PASSWORD>@pg-161848d2-youssefmohamedaly750-2283.d.aivencloud.com:17536/defaultdb?sslmode=require
+
+# Divided individual variables required by Chatwoot Rails
+- key: POSTGRES_HOST
+  value: pg-161848d2-youssefmohamedaly750-2283.d.aivencloud.com
+- key: POSTGRES_PORT
+  value: "17536"
+- key: POSTGRES_USERNAME
+  value: avnadmin
+- key: POSTGRES_PASSWORD
+  sync: false # Paste your database password in Render
+- key: POSTGRES_DATABASE
+  value: defaultdb
+- key: PGSSLMODE
+  value: require
+- key: POSTGRES_SSLMODE
+  value: require
+```
 
 ---
 
