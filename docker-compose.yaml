@@ -1,0 +1,95 @@
+services:
+  base: &base
+    image: chatwoot/chatwoot:latest
+    env_file: .env
+    volumes:
+      - storage_data:/app/storage
+
+  rails:
+    <<: *base
+    container_name: chatwoot_rails
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+    entrypoint: docker/entrypoints/rails.sh
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+
+  sidekiq:
+    <<: *base
+    container_name: chatwoot_sidekiq
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: chatwoot_postgres
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:-chatwoot_production}
+      POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatwoot_secure_password_replace_me}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DATABASE:-chatwoot_production}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: chatwoot_redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    command: >
+      sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
+               redis-server --requirepass "$$REDIS_PASSWORD";
+             else
+               redis-server;
+             fi'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-chatwoot_redis_password_replace_me}
+    healthcheck:
+      test: >
+        sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
+                 redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG;
+               else
+                 redis-cli ping | grep -q PONG;
+               fi'
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  storage_data:
+    name: chatwoot_storage_data
+  postgres_data:
+    name: chatwoot_postgres_data
+  redis_data:
+    name: chatwoot_redis_data
