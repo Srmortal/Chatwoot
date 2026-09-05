@@ -255,7 +255,7 @@ The `render.yaml` file defines a managed infrastructure blueprint:
 
 | Component | Render Type | Details |
 | :--- | :--- | :--- |
-| `chatwoot-web` | `web` | Web service running `chatwoot/chatwoot:latest`, pre-deploy migration `rails db:chatwoot_prepare`, health check `/health_check` |
+| `chatwoot-web` | `web` | Web service running `chatwoot/chatwoot:latest`, pre-deploy migration `rails db:chatwoot_prepare`, health check `/health` |
 | `chatwoot-worker` | `worker` | Background worker running `bundle exec sidekiq -C config/sidekiq.yml` |
 | `chatwoot-redis` | `redis` | Managed Redis instance for queue, cache, and WebSocket pub/sub |
 | `chatwoot-postgres` | `database` | Managed PostgreSQL 15 database |
